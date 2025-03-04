@@ -1,0 +1,109 @@
+
+CREATE DATABASE EChargeDB;
+USE EChargeDB;
+
+CREATE TABLE Users (
+    UserID INT IDENTITY(1,1) PRIMARY KEY,
+    FullName NVARCHAR(100) NOT NULL,
+    Email NVARCHAR(100) UNIQUE NOT NULL,
+    PasswordHash NVARCHAR(255) NOT NULL,
+    PhoneNumber NVARCHAR(15),
+    UserType NVARCHAR(20) CHECK (UserType IN ('Customer', 'Admin')) NOT NULL DEFAULT 'Customer',
+    CreatedAt DATETIME DEFAULT GETDATE()
+);
+
+CREATE TABLE ChargingStations (
+    StationID INT IDENTITY(1,1) PRIMARY KEY,
+    Name NVARCHAR(100) NOT NULL,
+    Location NVARCHAR(255) NOT NULL,
+    Capacity INT NOT NULL,
+    AvailableSpots INT NOT NULL,
+    PricePerCharge DECIMAL(10,2) NOT NULL,
+    CreatedAt DATETIME DEFAULT GETDATE()
+);
+
+CREATE TABLE ChargingBookings (
+    BookingID INT IDENTITY(1,1) PRIMARY KEY,
+    UserID INT FOREIGN KEY REFERENCES Users(UserID) ON DELETE CASCADE,
+    StationID INT FOREIGN KEY REFERENCES ChargingStations(StationID) ON DELETE CASCADE,
+    BookingDate DATETIME NOT NULL,
+    Status NVARCHAR(20) CHECK (Status IN ('Pending', 'Confirmed', 'Completed', 'Cancelled')) DEFAULT 'Pending'
+);
+
+CREATE TABLE Courses (
+    CourseID INT IDENTITY(1,1) PRIMARY KEY,
+    Title NVARCHAR(255) NOT NULL,
+    Description TEXT NOT NULL,
+    Price DECIMAL(10,2) NOT NULL,
+    StartDate DATETIME NOT NULL,
+    EndDate DATETIME NOT NULL,
+    Instructor NVARCHAR(100) NOT NULL,
+    CreatedAt DATETIME DEFAULT GETDATE()
+);
+
+CREATE TABLE CourseEnrollments (
+    EnrollmentID INT IDENTITY(1,1) PRIMARY KEY,
+    UserID INT FOREIGN KEY REFERENCES Users(UserID) ON DELETE CASCADE,
+    CourseID INT FOREIGN KEY REFERENCES Courses(CourseID) ON DELETE CASCADE,
+    EnrollmentDate DATETIME DEFAULT GETDATE(),
+    Status NVARCHAR(20) CHECK (Status IN ('Pending', 'Confirmed', 'Completed')) DEFAULT 'Pending'
+);
+
+CREATE TABLE Products (
+    ProductID INT IDENTITY(1,1) PRIMARY KEY,
+    Name NVARCHAR(255) NOT NULL,
+    Description TEXT NOT NULL,
+    Price DECIMAL(10,2) NOT NULL,
+    StockQuantity INT NOT NULL,
+    ImageURL NVARCHAR(255),
+    CreatedAt DATETIME DEFAULT GETDATE()
+);
+
+CREATE TABLE Orders (
+    OrderID INT IDENTITY(1,1) PRIMARY KEY,
+    UserID INT FOREIGN KEY REFERENCES Users(UserID) ON DELETE CASCADE,
+    TotalAmount DECIMAL(10,2) NOT NULL,
+    OrderDate DATETIME DEFAULT GETDATE(),
+    Status NVARCHAR(20) CHECK (Status IN ('Pending', 'Shipped', 'Delivered', 'Cancelled')) DEFAULT 'Pending'
+);
+
+CREATE TABLE OrderItems (
+    OrderItemID INT IDENTITY(1,1) PRIMARY KEY,
+    OrderID INT FOREIGN KEY REFERENCES Orders(OrderID) ON DELETE CASCADE,
+    ProductID INT FOREIGN KEY REFERENCES Products(ProductID) ON DELETE CASCADE,
+    Quantity INT NOT NULL,
+    SubTotal DECIMAL(10,2) NOT NULL
+);
+
+CREATE TABLE Payments (
+    PaymentID INT IDENTITY(1,1) PRIMARY KEY,
+    UserID INT FOREIGN KEY REFERENCES Users(UserID) ON DELETE CASCADE,
+    OrderID INT FOREIGN KEY REFERENCES Orders(OrderID) ON DELETE NO ACTION,
+    PaymentDate DATETIME DEFAULT GETDATE(),
+    AmountPaid DECIMAL(10,2) NOT NULL,
+    PaymentMethod NVARCHAR(50) CHECK (PaymentMethod IN ('Credit Card', 'PayPal', 'Bank Transfer', 'Cash')) NOT NULL
+);
+
+CREATE TABLE Reviews (
+    ReviewID INT IDENTITY(1,1) PRIMARY KEY,
+    UserID INT FOREIGN KEY REFERENCES Users(UserID) ON DELETE CASCADE,
+    ItemType NVARCHAR(20) CHECK (ItemType IN ('ChargingStation', 'Course', 'Product')) NOT NULL,
+    ItemID INT NOT NULL,
+    Rating INT CHECK (Rating BETWEEN 1 AND 5) NOT NULL,
+    Comment TEXT,
+    CreatedAt DATETIME DEFAULT GETDATE()
+);
+
+CREATE TABLE Admins (
+    AdminID INT IDENTITY(1,1) PRIMARY KEY,
+    UserID INT FOREIGN KEY REFERENCES Users(UserID) ON DELETE CASCADE,
+    Role NVARCHAR(50) NOT NULL
+);
+
+CREATE TABLE ContactMessages (
+    MessageID INT IDENTITY(1,1) PRIMARY KEY,
+    UserID INT FOREIGN KEY REFERENCES Users(UserID) ON DELETE CASCADE,
+    Subject NVARCHAR(255) NOT NULL,
+    Message TEXT NOT NULL,
+    CreatedAt DATETIME DEFAULT GETDATE()
+);
